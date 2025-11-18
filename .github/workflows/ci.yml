@@ -15,15 +15,26 @@ jobs:
           path: |
             ~/.arduino15
           key: ${{ runner.os }}-arduino-${{ hashFiles('**/package-lock.json') }}
+      - name: Prepare Arduino directories
+        run: |
+          mkdir -p "$HOME/.arduino15"
+          arduino-cli version || true
+      - name: Init Arduino CLI config
+        run: |
+          arduino-cli config init || true
+          arduino-cli config set board_manager.additional_urls https://downloads.arduino.cc/packages/package_index.json || true
+          arduino-cli config dump || true
       - name: Install AmebaD core
         run: |
-          arduino-cli core update-index
-          arduino-cli core install realtek:AmebaD || true
+          set -e
+          n=0; until [ "$n" -ge 8 ]; do arduino-cli core update-index && break; n=$((n+1)); echo "retry update-index $n"; sleep 8; done
+          n=0; until [ "$n" -ge 5 ]; do arduino-cli core install realtek:AmebaD && break; n=$((n+1)); echo "retry core install $n"; sleep 10; done
+          arduino-cli board listall | sed -n '1p;/realtek:AmebaD/p' || true
       - name: Build
         run: |
           FQBN=${FQBN:-realtek:AmebaD:Ai-Thinker_BW16}
-          arduino-cli compile --fqbn "$FQBN" ./ || {
-            echo "Build failed. Verify FQBN. Available AmebaD boards:"; arduino-cli board listall | sed -n '1p;/realtek:AmebaD/p'; exit 1; }
+          n=0; until [ "$n" -ge 3 ]; do arduino-cli compile --fqbn "$FQBN" ./ && break; n=$((n+1)); echo "retry compile $n"; sleep 6; done
+          if [ "$n" -ge 3 ]; then echo "Build failed. Verify FQBN."; arduino-cli board listall | sed -n '1p;/realtek:AmebaD/p'; exit 1; fi
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
