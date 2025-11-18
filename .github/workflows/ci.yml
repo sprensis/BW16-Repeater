@@ -33,7 +33,7 @@ jobs:
       - name: Build
         run: |
           FQBN=${FQBN:-realtek:AmebaD:Ai-Thinker_BW16}
-          n=0; until [ "$n" -ge 3 ]; do arduino-cli compile --fqbn "$FQBN" ./ && break; n=$((n+1)); echo "retry compile $n"; sleep 6; done
+          n=0; until [ "$n" -ge 3 ]; do arduino-cli compile --fqbn "$FQBN" ./BW16-WiFi-repeater.ino && break; n=$((n+1)); echo "retry compile $n"; sleep 6; done
           if [ "$n" -ge 3 ]; then echo "Build failed. Verify FQBN."; arduino-cli board listall | sed -n '1p;/realtek:AmebaD/p'; exit 1; fi
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
