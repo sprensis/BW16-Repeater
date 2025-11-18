@@ -33,6 +33,8 @@ scripts/
 
 ## Build on macOS
 - See `docs/build-macos.md`
+- Build locally: `FQBN=realtek:AmebaD:Ai-Thinker_BW16 bash scripts/build.sh`
+- CI compiles explicit sketch: `BW16-WiFi-repeater.ino`
 
 ## Flashing
 - See `docs/flash.md`
@@ -55,7 +57,7 @@ scripts/
 ### Setup Guide
 - Mode: use `NAT` for typical Internet access; `BRIDGE` is advanced.
 - STA Config:
-  - `SSID` — your home Wi‑Fi. Prefer 2.4 GHz for first setup.
+  - `SSID` — your home Wi‑Fi. Prefer 2.4 GHz for first setup; продвинуто: STA на 5 ГГц (36/40/44/48) + AP на 2.4 ГГц.
   - `Password` — your home Wi‑Fi password.
 - AP Config:
   - `SSID` — BW16 hotspot name (default `BW16‑Repeater`).
@@ -82,6 +84,19 @@ scripts/
 - Security: use `WPA2‑Personal` (PSK). `WPA3‑only` networks may fail to connect on RTL8720DN.
 - Region channels: some countries allow 2.4 GHz channels `12/13`. Auto Channel supports extended rotation `1/6/11/13/3/9` to improve matching.
 - KM4 (ARM Cortex‑M4): application core used by AmebaD. Flash with `realtek:AmebaD:Ai‑Thinker_BW16` and, if needed, use Burn+RST buttons during upload.
+
+### ESP32 NAT Router Extended — совместимость и перенос
+- Базовый проект: `https://github.com/dchristl/esp32_nat_router_extended` (см. README и releases) [1][4].
+- Что можно перенести на BW16:
+  - Веб‑интерфейс конфигурации STA/AP и применение настроек (частично реализовано: форма, `/scan`, Auto Channel).
+  - Captive Portal DNS (разрешение всех запросов на 192.168.4.1) и редирект HTTP — планируется лёгкий DNS‑ответчик + редиректы в WebUI.
+  - Хранение конфигурации в NVS — в BW16 реализовано через `FlashMemory` в `ConfigStore`.
+  - Serial CLI (`set_sta`, `set_ap`, `show`) — возможно добавить в `main.ino`.
+- Что не переносится напрямую:
+  - NAT‑механизм ESP‑IDF (netif/NAT API) — в AmebaD другой стек; на BW16 будет best‑effort NAT/bridge в `NatManager` на базе lwIP, с документированными ограничениями.
+- Дополнительно: ESP32 проект использует captive DNS по умолчанию (см. docs/advanced.md) [3]; для BW16 это будет доступно как опция.
+
+Ссылки: [1] репозиторий, [3] advanced.md, [4] README проекта ESP32.
 
 ### Troubleshooting AP visibility
 - Power cycle BW16 and wait up to 30s for AP
