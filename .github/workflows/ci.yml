@@ -1,0 +1,32 @@
+name: build
+on:
+  push:
+  pull_request:
+jobs:
+  arduino-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup arduino-cli
+        uses: arduino/setup-arduino-cli@v1
+      - name: Cache Arduino core
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.arduino15
+          key: ${{ runner.os }}-arduino-${{ hashFiles('**/package-lock.json') }}
+      - name: Install AmebaD core
+        run: |
+          arduino-cli core update-index
+          arduino-cli core install realtek:AmebaD || true
+      - name: Build
+        run: |
+          FQBN=${FQBN:-realtek:AmebaD:Ai-Thinker_BW16}
+          arduino-cli compile --fqbn "$FQBN" ./ || {
+            echo "Build failed. Verify FQBN. Available AmebaD boards:"; arduino-cli board listall | sed -n '1p;/realtek:AmebaD/p'; exit 1; }
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-bin
+          path: |
+            ./build/*
