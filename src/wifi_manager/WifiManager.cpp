@@ -30,6 +30,12 @@ void WifiManager::begin(ConfigStore& cfg, Logger& log) {
 void WifiManager::startSTA(const RepeaterConfig& c) {
   if (!c.staSsid[0]) { if (logger) logger->warn(String("STA skipped: empty SSID")); return; }
   WiFi.disconnect();
+  if (c.staStatic && c.staIP && c.staMask && c.staGateway) {
+    IPAddress ip((c.staIP>>24)&255, (c.staIP>>16)&255, (c.staIP>>8)&255, c.staIP&255);
+    IPAddress gw((c.staGateway>>24)&255, (c.staGateway>>16)&255, (c.staGateway>>8)&255, c.staGateway&255);
+    IPAddress mask((c.staMask>>24)&255, (c.staMask>>16)&255, (c.staMask>>8)&255, c.staMask&255);
+    WiFi.config(ip, gw, mask);
+  }
   WiFi.begin((char*)c.staSsid, c.staPass);
   lastMsg = String("Connecting STA to ")+String(c.staSsid);
 }
@@ -86,7 +92,13 @@ void WifiManager::ensureReconnect() {
   }
 }
 
-bool WifiManager::staConnected() const { return WiFi.status()==WL_CONNECTED; }
+bool WifiManager::staConnected() const {
+  IPAddress lip = WiFi.localIP();
+  IPAddress aip = apIP();
+  if (WiFi.status()!=WL_CONNECTED) return false;
+  if (lip[0]==0 && lip[1]==0 && lip[2]==0 && lip[3]==0) return false;
+  return !(lip[0]==aip[0] && lip[1]==aip[1] && lip[2]==aip[2] && lip[3]==aip[3]);
+}
 IPAddress WifiManager::staIP() const { return WiFi.localIP(); }
 IPAddress WifiManager::apIP() const {
   if (!cfgRef) return IPAddress(192,168,4,1);

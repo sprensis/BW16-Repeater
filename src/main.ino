@@ -55,4 +55,34 @@ void loop() {
   dhcp.loop();
   nat.loop();
   wdt.feed();
+  if (Serial.available()) {
+    static String ln;
+    while (Serial.available()) { char ch=Serial.read(); if (ch=='\n' || ch=='\r') break; ln+=ch; }
+    if (ln.length()) {
+      if (ln.startsWith("set_sta ")) {
+        int sp=ln.indexOf(' ',8); String ssid=ln.substring(8, sp>0?sp:ln.length()); String pass=""; if (sp>0) pass=ln.substring(sp+1);
+        strncpy(configStore.mutableRef().staSsid, ssid.c_str(), 63);
+        strncpy(configStore.mutableRef().staPass, pass.c_str(), 63);
+        configStore.save(); wifi.restartSTA();
+        Serial.println("OK");
+      } else if (ln.startsWith("set_ap ")) {
+        int p1=ln.indexOf(' ',7); int p2=p1>0?ln.indexOf(' ',p1+1):-1; int p3=p2>0?ln.indexOf(' ',p2+1):-1;
+        String ssid=p1>0?ln.substring(7,p1):ln.substring(7);
+        String pass=p2>0?ln.substring(p1+1,p2):"";
+        int ch=p3>0?ln.substring(p2+1,p3).toInt():(p2>0?ln.substring(p2+1).toInt():configStore.get().apChannel);
+        strncpy(configStore.mutableRef().apSsid, ssid.c_str(), 63);
+        strncpy(configStore.mutableRef().apPass, pass.c_str(), 63);
+        configStore.mutableRef().apChannel=(uint8_t)ch;
+        configStore.save(); wifi.restartAP();
+        Serial.println("OK");
+      } else if (ln=="show") {
+        Serial.println(String("STA ")+String(configStore.get().staSsid));
+        Serial.println(String("AP ")+String(configStore.get().apSsid)+String(" ch ")+String((int)configStore.get().apChannel));
+        Serial.println(String("MODE ")+(configStore.get().mode==RepeaterMode::BRIDGE?String("BRIDGE"):String("NAT")));
+      } else if (ln=="reboot") {
+        NVIC_SystemReset();
+      }
+      ln="";
+    }
+  }
 }

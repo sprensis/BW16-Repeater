@@ -15,6 +15,7 @@
 
 #pragma once
 #include <Arduino.h>
+#include <WiFiUdp.h>
 #include "../utils/ConfigStore.h"
 #include "../logger/Logger.h"
 
@@ -22,4 +23,9 @@ class DhcpServer {
  public:
   void begin(ConfigStore& cfg, Logger& log);
   void loop();
+ private:
+  void handleDns();
+  WiFiUDP dns;
+  ConfigStore* store=nullptr;
+  Logger* logger=nullptr;
 };

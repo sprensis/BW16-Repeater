@@ -31,6 +31,10 @@ void ConfigStore::begin() {
   cfg.apIP = (192<<24)|(168<<16)|(4<<8)|1;
   cfg.apMask = (255<<24)|(255<<16)|(255<<8)|0;
   cfg.apGateway = cfg.apIP;
+  cfg.staStatic = false;
+  cfg.staIP = 0;
+  cfg.staMask = 0;
+  cfg.staGateway = 0;
 }
 
 void ConfigStore::load() {

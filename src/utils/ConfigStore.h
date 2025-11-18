@@ -32,6 +32,10 @@ struct RepeaterConfig {
   uint32_t apIP;
   uint32_t apMask;
   uint32_t apGateway;
+  bool staStatic;
+  uint32_t staIP;
+  uint32_t staMask;
+  uint32_t staGateway;
 };
 
 class ConfigStore {

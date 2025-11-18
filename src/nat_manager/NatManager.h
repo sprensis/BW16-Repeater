@@ -25,9 +25,10 @@ class NatManager {
   void beginBridge(ConfigStore& cfg, Logger& log, WifiManager& wifi);
   void loop();
  private:
-  void runNatTick();
-  void runBridgeTick();
-  Logger* logger;
-  WifiManager* wifiRef;
-  bool natMode=false;
+ void runNatTick();
+ void runBridgeTick();
+ Logger* logger;
+ WifiManager* wifiRef;
+ bool natMode=false;
+  unsigned long lastProbe=0;
 };
